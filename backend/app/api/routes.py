@@ -1,13 +1,20 @@
 import asyncio
+import json
+import os
 import time
+import urllib.error
+import urllib.request
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from app.models.config import settings
 from app.models.schemas import (
     ProviderCatalog,
     ModelInfo,
     AnalyzeRequest,
     AnalyzeResponse,
+    ChatRequest,
+    ChatResponse,
     ReportJsonResponse,
     Recommendation,
     ConflictResolution,
@@ -23,6 +30,92 @@ router = APIRouter()
 analyses_db: dict[str, dict] = {}
 # In-memory history list
 history_db: list[dict] = []
+
+
+def _find_history(job_id: str | None) -> dict | None:
+    if not job_id:
+        return None
+    return next((item for item in history_db if item.get("job_id") == job_id), None)
+
+
+def _compact_report_context(job_id: str | None, repo_path: str | None) -> str:
+    report = analyses_db.get(job_id or "")
+    history = _find_history(job_id)
+    path = repo_path or (history or {}).get("path") or "unknown repository"
+
+    if not report:
+        return (
+            f"Repository: {path}\n"
+            "Analysis report is not available yet. Answer from the visible project context and say when the report is still running."
+        )
+
+    context = {
+        "repository": path,
+        "job_id": job_id,
+        "status": report.get("status"),
+        "executive_summary": report.get("executive_summary"),
+        "health_score": report.get("health_score"),
+        "key_strengths": report.get("key_strengths", []),
+        "key_risks": report.get("key_risks", []),
+        "recommendations": report.get("recommendations", [])[:5],
+        "conflicts_resolved": report.get("conflicts_resolved", [])[:3],
+        "file_heatmap": report.get("file_heatmap", {}),
+        "agent_durations": report.get("agent_durations", {}),
+    }
+    return json.dumps(context, ensure_ascii=False, default=str)
+
+
+def _fallback_chat_answer(message: str, context: str) -> str:
+    return (
+        "현재 서버에 AI provider 키가 연결되지 않았거나 일시적으로 응답을 받지 못해, "
+        "분석 리포트 기반의 기본 답변을 제공합니다.\n\n"
+        f"질문: {message}\n\n"
+        "이 프로젝트는 CodeMap AI의 분석 결과를 바탕으로 구조 요약, 위험 지점, 추천 작업, "
+        "온보딩 순서를 설명하는 대시보드입니다. 우측 리포트의 executive summary, recommendations, "
+        "file heatmap을 먼저 확인하면 팀원이 수정해야 할 파일과 위험 포인트를 빠르게 파악할 수 있습니다.\n\n"
+        f"사용된 컨텍스트 요약:\n{context[:1200]}"
+    )
+
+
+def _call_chat_provider(messages: list[dict]) -> tuple[str, str]:
+    api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("AI_API_KEY_MISSING")
+
+    base_url = (
+        settings.AI_BASE_URL
+        or os.getenv("OPENROUTER_BASE_URL")
+        or ("https://openrouter.ai/api/v1" if os.getenv("OPENROUTER_API_KEY") else "https://api.openai.com/v1")
+    ).rstrip("/")
+    model = settings.AI_MODEL or ("google/gemini-2.5-flash" if os.getenv("OPENROUTER_API_KEY") else settings.DEFAULT_MODEL)
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.2,
+        "max_tokens": 900,
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "https://oosu.dev"),
+        "X-Title": os.getenv("OPENROUTER_SITE_NAME", "CodeMap AI"),
+    }
+    req = urllib.request.Request(
+        f"{base_url}/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"AI_PROVIDER_ERROR:{exc.code}:{detail[:500]}") from exc
+
+    answer = data["choices"][0]["message"]["content"]
+    return answer, model
 
 # Populate initial history and mock reports for demonstrations
 MOCK_JOBS = {
@@ -441,3 +534,36 @@ async def get_report(job_id: str, format: str = Query("json", regex="^(json|html
         return report.get("html_report") or "<div>No HTML report content available</div>"
     
     return report
+
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat_with_project(payload: ChatRequest):
+    """Answer project questions using the latest analysis report as context."""
+    user_message = payload.message.strip()
+    if not user_message:
+        raise HTTPException(status_code=400, detail="Message is required")
+
+    context = _compact_report_context(payload.job_id, payload.repo_path)
+    system_prompt = (
+        "You are CodeMap AI's project copilot inside an analysis dashboard. "
+        "Answer in Korean by default. Be concise, practical, and grounded in the supplied repository analysis context. "
+        "If the context is mock or incomplete, say so clearly and separate confirmed facts from inferences."
+    )
+    provider_messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"Repository analysis context:\n{context}"},
+    ]
+    for item in payload.messages[-8:]:
+        if item.role in {"user", "assistant"} and item.content.strip():
+            provider_messages.append({"role": item.role, "content": item.content.strip()[:2000]})
+    provider_messages.append({"role": "user", "content": user_message})
+
+    try:
+        answer, model = await asyncio.to_thread(_call_chat_provider, provider_messages)
+        return ChatResponse(answer=answer, model=model, used_context=bool(context))
+    except Exception:
+        return ChatResponse(
+            answer=_fallback_chat_answer(user_message, context),
+            model="fallback",
+            used_context=bool(context),
+        )

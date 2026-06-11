@@ -1,6 +1,8 @@
 import type {
   AnalyzeRequest,
   AnalyzeResponse,
+  ChatRequest,
+  ChatResponse,
   JobProgressResponse,
   ReportJsonResponse,
 } from "@/types/contracts";
@@ -51,6 +53,22 @@ export async function fetchReportHtml(jobId: string): Promise<string> {
     throw new Error(`Failed to fetch report HTML: ${resp.status}`);
   }
   return await resp.text();
+}
+
+export async function chatWithProject(payload: ChatRequest): Promise<ChatResponse> {
+  const resp = await fetch(apiPath("/chat"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Failed to chat with project: ${resp.status}`);
+  }
+
+  return await resp.json();
 }
 
 export function buildWsUrl(wsPath: string): string {

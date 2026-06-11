@@ -24,6 +24,21 @@ class AnalyzeResponse(BaseModel):
     created_at: str
     ws_url: str
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    job_id: Optional[str] = None
+    repo_path: Optional[str] = None
+    messages: List[ChatMessage] = Field(default_factory=list)
+
+class ChatResponse(BaseModel):
+    answer: str
+    model: str
+    used_context: bool = False
+
 class LineRisk(BaseModel):
     line: int
     risk_level: str

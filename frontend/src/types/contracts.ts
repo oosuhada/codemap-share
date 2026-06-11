@@ -96,6 +96,24 @@ export interface AnalyzeResponse {
   ws_url: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  job_id?: string | null;
+  repo_path?: string | null;
+  messages?: ChatMessage[];
+}
+
+export interface ChatResponse {
+  answer: string;
+  model: string;
+  used_context: boolean;
+}
+
 export interface GuardrailRegexBlock {
   original_text: string;
   rule_id: string;
