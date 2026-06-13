@@ -657,16 +657,34 @@ async def run_real_analysis_pipeline(job_id: str, path: str, source: str, model:
             )
             ai_report = _json_from_model_text(ai_text)
         except Exception:
-            ai_text, used_model = "", selected_model
-            ai_report = {
-                "executive_summary": f"실제 Git clone 후 {stats['file_count']}개 파일을 스캔했습니다. AI JSON 리포트 생성은 실패해 정적 분석 기반 요약을 사용합니다.",
-                "health_score": 70,
-                "key_strengths": [f"감지된 언어: {', '.join(stats.get('languages', {}).keys()) or 'unknown'}"],
-                "key_risks": ["AI provider 응답을 구조화하지 못해 세부 판단은 제한적입니다."],
-                "recommendations": [],
-                "conflicts_resolved": [],
-                "html_report": "",
-            }
+            if selected_model != MODEL_FALLBACKS["fast"]:
+                try:
+                    ai_text, used_model = await asyncio.to_thread(
+                        _call_chat_provider,
+                        [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": f"Repository URL: {path}\nReal scan context:\n{prompt_context}"},
+                        ],
+                        MODEL_FALLBACKS["fast"],
+                        2600,
+                    )
+                    ai_report = _json_from_model_text(ai_text)
+                except Exception:
+                    ai_text, used_model = "", selected_model
+                    ai_report = {}
+            else:
+                ai_text, used_model = "", selected_model
+                ai_report = {}
+            if not ai_report:
+                ai_report = {
+                    "executive_summary": f"실제 Git clone 후 {stats['file_count']}개 파일을 스캔했습니다. AI JSON 리포트 생성은 실패해 정적 분석 기반 요약을 사용합니다.",
+                    "health_score": 70,
+                    "key_strengths": [f"감지된 언어: {', '.join(stats.get('languages', {}).keys()) or 'unknown'}"],
+                    "key_risks": ["AI provider 응답을 구조화하지 못해 세부 판단은 제한적입니다."],
+                    "recommendations": [],
+                    "conflicts_resolved": [],
+                    "html_report": "",
+                }
         agent_durations["behavior_inferer"] = int((time.time() - agent_started["behavior_inferer"]) * 1000)
         await progress_bus.publish(job_id, {
             "type": "agent_completed",
