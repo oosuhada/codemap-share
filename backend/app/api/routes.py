@@ -339,6 +339,8 @@ def _json_from_model_text(text: str) -> dict:
 
 def _report_from_ai_text(text: str, stats: dict) -> dict:
     clean = text.strip() or "AI 모델이 빈 응답을 반환했습니다."
+    clean = re.sub(r"^```(?:json)?", "", clean).strip()
+    clean = re.sub(r"```$", "", clean).strip()
     paragraphs = "\n".join(
         f"<p>{html.escape(line.strip())}</p>"
         for line in clean.splitlines()
@@ -669,10 +671,11 @@ async def run_real_analysis_pipeline(job_id: str, path: str, source: str, model:
         system_prompt = (
             "You are CodeMap AI. Analyze the supplied real repository scan and return ONLY valid JSON. "
             "Write Korean prose. Do not invent files that are not in the context. "
+            "Keep the response concise enough to finish completely. No markdown fences. "
             "JSON schema: {executive_summary:string, health_score:number, key_strengths:string[], key_risks:string[], "
-            "recommendations:[{title:string, detail:string, affected_files:string[], priority:'critical'|'high'|'medium'|'low'}], "
-            "conflicts_resolved:[{module:string, static_view:string, behavior_view:string, final_recommendation:string, confidence:number}], "
-            "onboarding_steps:string[], html_report:string}"
+            "recommendations:max 4 items of {title:string, detail:string, affected_files:max 4 strings, priority:'critical'|'high'|'medium'|'low'}, "
+            "conflicts_resolved:max 3 items of {module:string, static_view:string, behavior_view:string, final_recommendation:string, confidence:number}, "
+            "onboarding_steps:max 5 strings, html_report:string under 900 chars}"
         )
         try:
             ai_text, used_model = await asyncio.to_thread(
@@ -682,7 +685,7 @@ async def run_real_analysis_pipeline(job_id: str, path: str, source: str, model:
                     {"role": "user", "content": f"Repository URL: {path}\nReal scan context:\n{prompt_context}"},
                 ],
                 selected_model,
-                2600,
+                5000,
             )
             try:
                 ai_report = _json_from_model_text(ai_text)
@@ -698,7 +701,7 @@ async def run_real_analysis_pipeline(job_id: str, path: str, source: str, model:
                             {"role": "user", "content": f"Repository URL: {path}\nReal scan context:\n{prompt_context}"},
                         ],
                         MODEL_FALLBACKS["fast"],
-                        2600,
+                        5000,
                     )
                     try:
                         ai_report = _json_from_model_text(ai_text)
