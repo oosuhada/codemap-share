@@ -1,4 +1,5 @@
 import asyncio
+import html
 import json
 import os
 import re
@@ -336,6 +337,34 @@ def _json_from_model_text(text: str) -> dict:
     return json.loads(stripped)
 
 
+def _report_from_ai_text(text: str, stats: dict) -> dict:
+    clean = text.strip() or "AI 모델이 빈 응답을 반환했습니다."
+    paragraphs = "\n".join(
+        f"<p>{html.escape(line.strip())}</p>"
+        for line in clean.splitlines()
+        if line.strip()
+    )
+    return {
+        "executive_summary": clean[:1400],
+        "health_score": 78,
+        "key_strengths": [
+            f"실제 Git clone 후 {stats.get('file_count', 0)}개 파일을 스캔했습니다.",
+            f"언어 구성: {', '.join(stats.get('languages', {}).keys()) or 'unknown'}",
+        ],
+        "key_risks": [
+            "AI 응답이 구조화 JSON이 아니어서 추천 항목 일부는 정적 분석 결과와 함께 표시됩니다.",
+        ],
+        "recommendations": [],
+        "conflicts_resolved": [],
+        "html_report": f"""
+        <div class="space-y-4">
+          <h2>AI Repository Analysis</h2>
+          {paragraphs}
+        </div>
+        """,
+    }
+
+
 def _fallback_report(job_id: str, repo_url: str, stats: dict, model: str, started_at: float) -> dict:
     risk_files = stats.get("risk_files", [])[:3]
     recommendations = [
@@ -655,7 +684,10 @@ async def run_real_analysis_pipeline(job_id: str, path: str, source: str, model:
                 selected_model,
                 2600,
             )
-            ai_report = _json_from_model_text(ai_text)
+            try:
+                ai_report = _json_from_model_text(ai_text)
+            except Exception:
+                ai_report = _report_from_ai_text(ai_text, stats)
         except Exception:
             if selected_model != MODEL_FALLBACKS["fast"]:
                 try:
@@ -668,7 +700,10 @@ async def run_real_analysis_pipeline(job_id: str, path: str, source: str, model:
                         MODEL_FALLBACKS["fast"],
                         2600,
                     )
-                    ai_report = _json_from_model_text(ai_text)
+                    try:
+                        ai_report = _json_from_model_text(ai_text)
+                    except Exception:
+                        ai_report = _report_from_ai_text(ai_text, stats)
                 except Exception:
                     ai_text, used_model = "", selected_model
                     ai_report = {}
