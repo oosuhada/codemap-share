@@ -95,6 +95,7 @@ export default function AnalyzePage() {
   const [htmlReport, setHtmlReport] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [repoPath, setRepoPath] = useState<string | null>(null);
+  const [initialRepoSource, setInitialRepoSource] = useState<RepoSource>("local");
 
   const [refreshToken, setRefreshToken] = useState(0);
   const [historicalJobId, setHistoricalJobId] = useState<string | null>(null);
@@ -229,6 +230,8 @@ export default function AnalyzePage() {
     const sourceParam = params.get("source") as RepoSource | null;
 
     if (pathParam) {
+      setRepoPath(pathParam);
+      setInitialRepoSource(sourceParam || "local");
       void submit({
         path: pathParam,
         source: sourceParam || "local",
@@ -276,7 +279,12 @@ export default function AnalyzePage() {
       <main className="mx-auto max-w-[1800px] px-6 py-8 grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)_380px]">
         {/* Sidebar */}
         <aside className="space-y-5">
-          <RepoInput onSubmit={submit} disabled={running} />
+          <RepoInput
+            onSubmit={submit}
+            disabled={running}
+            initialMode={initialRepoSource}
+            initialValue={repoPath || ""}
+          />
 
           <AnimatePresence>
             {jobId && (

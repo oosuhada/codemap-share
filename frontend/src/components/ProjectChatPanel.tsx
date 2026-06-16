@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Bot, Loader2, Send, UserRound } from "lucide-react";
+import { Bot, ChevronDown, ChevronUp, Loader2, MessageSquare, Send, UserRound } from "lucide-react";
 import { chatWithProject } from "@/lib/api";
 import type { ChatMessage, ReportJsonResponse } from "@/types/contracts";
 import { useApp } from "@/contexts/AppContext";
@@ -19,6 +19,7 @@ const SUGGESTIONS = [
 ];
 
 export function ProjectChatPanel({ jobId, repoPath, report }: ProjectChatPanelProps) {
+  const [collapsed, setCollapsed] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -87,19 +88,35 @@ export function ProjectChatPanel({ jobId, repoPath, report }: ProjectChatPanelPr
     : "bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500";
 
   return (
-    <aside className={`border rounded-2xl overflow-hidden flex flex-col min-h-[620px] xl:sticky xl:top-6 ${panelClass}`}>
+    <aside className={`border rounded-2xl overflow-hidden flex flex-col xl:sticky xl:top-4 ${collapsed ? "min-h-0" : "h-[calc(100vh-96px)] max-h-[760px] min-h-[520px]"} ${panelClass}`}>
       <div className={`px-4 py-3 border-b ${isDark ? "border-zinc-800" : "border-zinc-200"}`}>
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-blue-400" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="h-8 w-8 shrink-0 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+              {collapsed ? <MessageSquare className="h-4 w-4 text-blue-400" /> : <Bot className="h-4 w-4 text-blue-400" />}
+            </div>
+            <div className="min-w-0">
+              <h2 className={`text-sm font-semibold ${titleClass}`}>Project Copilot</h2>
+              <p className={`truncate text-[10px] ${mutedClass}`}>{contextLabel}</p>
+            </div>
           </div>
-          <div>
-            <h2 className={`text-sm font-semibold ${titleClass}`}>Project Copilot</h2>
-            <p className={`text-[10px] ${mutedClass}`}>{contextLabel}</p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setCollapsed((value) => !value)}
+            className={`rounded-lg border p-1.5 transition-colors ${
+              isDark
+                ? "border-zinc-700 text-zinc-400 hover:text-white"
+                : "border-zinc-200 text-zinc-500 hover:text-zinc-900"
+            }`}
+            aria-label={collapsed ? "채팅 펼치기" : "채팅 접기"}
+          >
+            {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 
+      {!collapsed && (
+        <>
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {!report && (
           <div className={`rounded-xl border p-3 text-[11px] leading-relaxed ${
@@ -190,6 +207,8 @@ export function ProjectChatPanel({ jobId, repoPath, report }: ProjectChatPanelPr
           </button>
         </form>
       </div>
+        </>
+      )}
     </aside>
   );
 }

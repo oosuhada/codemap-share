@@ -29,6 +29,8 @@ export interface RepoInputProps {
   }) => void;
   disabled?: boolean;
   defaultMode?: RepoSource;
+  initialMode?: RepoSource;
+  initialValue?: string;
 }
 
 const WINDOWS_PATH = /^[a-zA-Z]:[\\/](?:[^<>:"|?*\r\n]+[\\/]?)*$/;
@@ -54,9 +56,11 @@ export function RepoInput({
   onSubmit,
   disabled = false,
   defaultMode = "local",
+  initialMode,
+  initialValue = "",
 }: RepoInputProps) {
-  const [mode, setMode] = useState<RepoSource>(defaultMode);
-  const [value, setValue] = useState("");
+  const [mode, setMode] = useState<RepoSource>(initialMode || defaultMode);
+  const [value, setValue] = useState(initialValue);
   const [touched, setTouched] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(false);
   const [catalog, setCatalog] = useState<ProviderCatalog | null>(null);
@@ -87,6 +91,13 @@ export function RepoInput({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!initialValue) return;
+    setMode(initialMode || defaultMode);
+    setValue(initialValue);
+    setTouched(false);
+  }, [defaultMode, initialMode, initialValue]);
 
   const error = useMemo(
     () => (touched ? validate(mode, value, t) : null),
