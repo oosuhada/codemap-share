@@ -6,6 +6,7 @@ import { RepoInput, type RepoSource } from "@/components/RepoInput";
 import { ProgressPanel } from "@/components/ProgressPanel";
 import { ReportViewer } from "@/components/ReportViewer";
 import { HistoryList } from "@/components/HistoryList";
+import { ProjectChatPanel } from "@/components/ProjectChatPanel";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { startAnalysis, fetchReportJson, fetchReportHtml, buildWsUrl } from "@/lib/api";
 import type {
@@ -93,6 +94,7 @@ export default function AnalyzePage() {
   const [report, setReport] = useState<ReportJsonResponse | null>(null);
   const [htmlReport, setHtmlReport] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [repoPath, setRepoPath] = useState<string | null>(null);
 
   const [refreshToken, setRefreshToken] = useState(0);
   const [historicalJobId, setHistoricalJobId] = useState<string | null>(null);
@@ -179,6 +181,7 @@ export default function AnalyzePage() {
     setReport(null);
     setHtmlReport(null);
     setError(null);
+    setRepoPath(input.path);
     setHistoricalJobId(null);
     setAgents({
       static_analyzer: { name: "static_analyzer", status: "pending", progress: 0 },
@@ -212,6 +215,7 @@ export default function AnalyzePage() {
       const html = await fetchReportHtml(clickedJobId).catch(() => null);
       setHtmlReport(html);
       setHistoricalJobId(clickedJobId);
+      setJobId(clickedJobId);
     } catch (e) {
       alert(`Failed to load: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -269,7 +273,7 @@ export default function AnalyzePage() {
       </div>
 
       {/* Main layout */}
-      <main className="mx-auto max-w-7xl px-6 py-8 grid gap-6 lg:grid-cols-[380px_1fr]">
+      <main className="mx-auto max-w-[1800px] px-6 py-8 grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)_380px]">
         {/* Sidebar */}
         <aside className="space-y-5">
           <RepoInput onSubmit={submit} disabled={running} />
@@ -338,6 +342,12 @@ export default function AnalyzePage() {
             )}
           </AnimatePresence>
         </section>
+
+        <ProjectChatPanel
+          jobId={historicalJobId || jobId}
+          repoPath={repoPath}
+          report={report}
+        />
       </main>
     </div>
   );
