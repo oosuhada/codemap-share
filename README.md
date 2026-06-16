@@ -4,15 +4,11 @@ AI 코드베이스 온보딩 도우미 MVP입니다.
 
 GitHub 저장소 URL을 입력하면 CodeMap AI가 저장소 구조를 분석하고, 여러 분석 agent의 진행 상태를 보여준 뒤, 신규 팀원이 읽기 쉬운 코드베이스 온보딩 리포트를 생성하는 흐름을 목표로 합니다.
 
-## 왜 만들었나 / Why I built it
+## Why I Built It / 만든 이유
 
-새 회사나 프로젝트에 들어가면 기능을 만드는 시간보다 **기존 코드를 이해하는 시간**이 훨씬 길어지는 경우가 있습니다. 나 역시 Sticks & Stones 작업에 처음 착수했을 때 기존 WordPress 코드와 구조를 파악하는 데 약 2주가 걸렸고, 이 온보딩 시간을 LLM으로 획기적으로 줄일 수 없을까 생각했습니다.
+When stepping into a new project at work, it took two full weeks just to understand an unfamiliar codebase before I could make changes confidently. I built CodeMap AI to compress that onboarding time with LLMs — and turn codebase understanding into a shared workspace the team can explore together, much like Google Docs did for documents.
 
-여기서 한 단계 더 나아가, Microsoft Word가 Google Docs를 만나 문서를 함께 이해하고 편집하는 공간이 된 것처럼 **VS Code에도 코드베이스를 함께 탐색하고 이해하고 협업하는 온라인 레이어**가 있으면 좋겠다고 생각했습니다. CodeMap AI는 repository를 단순 요약하는 도구가 아니라 구조·관계·위험 지점·분석 agent의 진행 상태를 공유하면서 팀이 같은 코드 맥락 위에서 대화하도록 만드는 실험입니다.
-
-CodeMap AI started from a very practical onboarding problem: it once took me roughly two weeks just to understand an existing WordPress codebase before I could work confidently on it. I wanted LLMs to compress that discovery time, then push the idea further toward a collaborative coding surface—something closer to what Google Docs did for documents, but for understanding and navigating a codebase together.
-
-현재 이 저장소는 팀 프로젝트 공유와 역할 분담을 위한 MVP scaffold입니다. 프론트엔드 화면, FastAPI mock backend, WebSocket 기반 진행 상태, 리포트 화면, 작업 분할 문서가 포함되어 있습니다.
+새로운 현업 프로젝트에 투입되어 낯선 코드베이스를 파악하는 데만 2주가 걸렸습니다. 그 온보딩 시간을 LLM으로 줄이고 싶었고, 더 나아가 코드를 이해한 맥락 자체를 팀이 함께 탐색하는 공간으로 만들고 싶었습니다. 마치 Google Docs가 문서를 협업 공간으로 바꾼 것처럼, 코드베이스 이해도 함께 공유될 수 있다고 생각했습니다.
 
 ## 공유 데모
 
