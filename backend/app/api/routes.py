@@ -42,11 +42,44 @@ def _compact_report_context(job_id: str | None, repo_path: str | None) -> str:
     report = analyses_db.get(job_id or "")
     history = _find_history(job_id)
     path = repo_path or (history or {}).get("path") or "unknown repository"
+    codemap_scaffold_context = {
+        "frontend_core_files": [
+            "frontend/src/app/page.tsx",
+            "frontend/src/app/analyze/page.tsx",
+            "frontend/src/components/RepoInput.tsx",
+            "frontend/src/components/ProgressPanel.tsx",
+            "frontend/src/components/ReportViewer.tsx",
+            "frontend/src/components/ProjectChatPanel.tsx",
+            "frontend/src/components/HistoryList.tsx",
+            "frontend/src/hooks/useWebSocket.ts",
+            "frontend/src/lib/api.ts",
+            "frontend/src/types/contracts.ts",
+        ],
+        "backend_core_files": [
+            "backend/app/main.py",
+            "backend/app/api/routes.py",
+            "backend/app/api/progress_bus.py",
+            "backend/app/models/schemas.py",
+            "backend/app/models/config.py",
+            "backend/app/services/repo_cloner.py",
+            "backend/app/services/analysis_store.py",
+            "backend/app/orchestrator/planner.py",
+            "backend/app/agents/code_mapper.py",
+            "backend/app/agents/doc_generator.py",
+            "backend/app/agents/onboarding_guide.py",
+        ],
+        "current_mvp_limits": [
+            "Most backend analysis data is mock data.",
+            "Repo clone, persistent store, and real code analysis agents are scaffolded but not fully implemented.",
+            "The deployed preview runs a static Next.js frontend and FastAPI backend behind oosu.dev/codemap/example.",
+        ],
+    }
 
     if not report:
         return (
             f"Repository: {path}\n"
-            "Analysis report is not available yet. Answer from the visible project context and say when the report is still running."
+            "Analysis report is not available yet. Answer from the visible project context and say when the report is still running.\n"
+            f"Known CodeMap AI scaffold context: {json.dumps(codemap_scaffold_context, ensure_ascii=False)}"
         )
 
     context = {
@@ -61,6 +94,7 @@ def _compact_report_context(job_id: str | None, repo_path: str | None) -> str:
         "conflicts_resolved": report.get("conflicts_resolved", [])[:3],
         "file_heatmap": report.get("file_heatmap", {}),
         "agent_durations": report.get("agent_durations", {}),
+        "known_codemap_ai_scaffold": codemap_scaffold_context,
     }
     return json.dumps(context, ensure_ascii=False, default=str)
 
