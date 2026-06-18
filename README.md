@@ -175,3 +175,7 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Topics
+
+[`codebase-onboarding`](https://github.com/topics/codebase-onboarding) · [`developer-tools`](https://github.com/topics/developer-tools) · [`fastapi`](https://github.com/topics/fastapi) · [`nextjs`](https://github.com/topics/nextjs) · [`react`](https://github.com/topics/react) · [`tailwindcss`](https://github.com/topics/tailwindcss) · [`typescript`](https://github.com/topics/typescript) · [`websocket`](https://github.com/topics/websocket)
