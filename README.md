@@ -176,6 +176,16 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Topics
+## Architecture & Topics / 아키텍처 및 주제
 
-[`codebase-onboarding`](https://github.com/topics/codebase-onboarding) · [`developer-tools`](https://github.com/topics/developer-tools) · [`fastapi`](https://github.com/topics/fastapi) · [`nextjs`](https://github.com/topics/nextjs) · [`react`](https://github.com/topics/react) · [`tailwindcss`](https://github.com/topics/tailwindcss) · [`typescript`](https://github.com/topics/typescript) · [`websocket`](https://github.com/topics/websocket) · [`llm`](https://github.com/topics/llm) · [`code-visualization`](https://github.com/topics/code-visualization) · [`code-analysis`](https://github.com/topics/code-analysis) · [`collaboration`](https://github.com/topics/collaboration) · [`code-navigation`](https://github.com/topics/code-navigation) · [`knowledge-graph`](https://github.com/topics/knowledge-graph) · [`developer-experience`](https://github.com/topics/developer-experience) · [`full-stack`](https://github.com/topics/full-stack)
+**Architecture / 아키텍처**<br>
+[`feature-sliced-design`](https://github.com/topics/feature-sliced-design) · [`three-tier-architecture`](https://github.com/topics/three-tier-architecture) · [`domain-driven-design`](https://github.com/topics/domain-driven-design) · [`repository-pattern`](https://github.com/topics/repository-pattern) · [`knowledge-graph`](https://github.com/topics/knowledge-graph) · [`retrieval-augmented-generation`](https://github.com/topics/retrieval-augmented-generation) · [`agentic-search`](https://github.com/topics/agentic-search) · [`websocket-architecture`](https://github.com/topics/websocket-architecture) · [`event-driven-architecture`](https://github.com/topics/event-driven-architecture) · [`shared-workspace`](https://github.com/topics/shared-workspace)
+
+**Core technologies / 핵심 기술**<br>
+[`pgvector`](https://github.com/topics/pgvector) · [`websocket`](https://github.com/topics/websocket)
+
+**Project context / 프로젝트 맥락**<br>
+[`code-analysis`](https://github.com/topics/code-analysis) · [`code-navigation`](https://github.com/topics/code-navigation) · [`code-visualization`](https://github.com/topics/code-visualization) · [`codebase-onboarding`](https://github.com/topics/codebase-onboarding) · [`collaboration`](https://github.com/topics/collaboration) · [`developer-experience`](https://github.com/topics/developer-experience) · [`developer-tools`](https://github.com/topics/developer-tools) · [`full-stack`](https://github.com/topics/full-stack) · [`llm`](https://github.com/topics/llm)
+
+**Implementation stack / 구현 스택**<br>
+[`fastapi`](https://github.com/topics/fastapi) · [`nextjs`](https://github.com/topics/nextjs) · [`react`](https://github.com/topics/react) · [`tailwindcss`](https://github.com/topics/tailwindcss) · [`typescript`](https://github.com/topics/typescript)
